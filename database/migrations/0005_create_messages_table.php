@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users');
-            $table->foreignId('support_id')->nullable()->constrained('users');
-            $table->text('content');
+            $table->foreignId('user_id')->constrained('users'); // кто отправил
+            $table->foreignId('support_id')->nullable()->constrained('users'); //кто получил сообщение
+            $table->text('content'); 
             $table->string('attachment')->nullable();
-            $table->boolean('is_from_user')->default(true);
+            $table->boolean('is_from_user')->default(true); //от пользователя или от поддержки
             $table->timestamps();
         });
     }

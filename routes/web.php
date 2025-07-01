@@ -50,7 +50,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
     Route::post('/chat', [ChatController::class, 'store'])->name('chat.store');
     
-    // Админка (доступна напрямую без middleware для отладки)
+    // Админка 
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
     Route::put('/admin/users/{user}/role', [AdminController::class, 'updateRole'])->name('admin.users.role.update');
 });

@@ -4,6 +4,14 @@
     <div class="ticket-list">
         <h2 class="title_history">История обращений</h2>
         
+        @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-error">{{ session('error') }}</div>
+        @endif
+        
         @if(auth()->user()->isSupport())
             <!-- Поиск клиентов для сотрудника поддержки -->
             <div class="search-container">
@@ -47,7 +55,11 @@
                             <form action="{{ route('tickets.update.deadline', $ticket) }}" method="POST" class="deadline-form">
                                 @csrf
                                 @method('PUT')
-                                <input type="date" name="processing_deadline" value="{{ $ticket->processing_deadline->format('Y-m-d') }}" class="date-input">
+                                <input type="date" 
+                                       name="processing_deadline" 
+                                       value="{{ $ticket->processing_deadline->format('Y-m-d') }}" 
+                                       class="date-input"
+                                       min="{{ \Carbon\Carbon::now()->format('Y-m-d') }}">
                                 <button type="submit" class="button">Обновить срок</button>
                             </form>
                             
@@ -91,6 +103,72 @@
             color: #000;
             margin: 10px 0px 10px 270px;
         }
+
+        .alert {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 900;
+            font-style: italic;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .search-result-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            font-weight: 900;
+            font-style: italic;
+        }
+
+        .search-result-item:hover {
+            background: #f5f5f5;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
         .user-navigation {
             padding: 10px;
             display: flex;
@@ -127,6 +205,13 @@
             margin-right: 5px;
             font-weight: 900;
             font-style: italic;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        .date-input.invalid {
+            border-color: #dc3545 !important;
+            background-color: #f8d7da !important;
         }
         
         .ticket-error-text {
@@ -179,16 +264,23 @@
                 margin-top: 5px;
             }
             .title_history{
-            font-size: 24px;
-            font-weight: 900;
-            color: #000;
-            margin: 10px 0px 10px 95px;
-        }
+                font-size: 24px;
+                font-weight: 900;
+                color: #000;
+                margin: 10px 0px 10px 95px;
+            }
         }
     </style>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Получаем сегодняшнюю дату
+            const today = new Date();
+            const todayString = today.getFullYear() + '-' + 
+                String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(today.getDate()).padStart(2, '0');
+
+            // Поиск пользователей (ваш существующий код)
             const searchInput = document.getElementById('userSearch');
             const searchResults = document.getElementById('searchResults');
             
@@ -249,6 +341,69 @@
                         searchResults.style.display = 'none';
                     }
                 });
+            }
+
+            // ДОБАВЛЯЕМ ВАЛИДАЦИЮ ДАТ
+            document.querySelectorAll('.date-input').forEach(input => {
+                // Валидация при изменении даты
+                input.addEventListener('change', function() {
+                    const selectedDate = this.value;
+                    
+                    if (selectedDate < todayString) {
+                        this.classList.add('invalid');
+                        showAlert('❌ Срок обработки не может быть установлен на прошедшую дату!', 'error');
+                        
+                        // Возвращаем к исходному значению через 2 секунды
+                        setTimeout(() => {
+                            this.value = this.getAttribute('value'); // Возвращаем к исходному значению
+                            this.classList.remove('invalid');
+                        }, 2000);
+                    } else {
+                        this.classList.remove('invalid');
+                    }
+                });
+            });
+
+            // ДОБАВЛЯЕМ ВАЛИДАЦИЮ ФОРМ ПЕРЕД ОТПРАВКОЙ
+            document.querySelectorAll('.deadline-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const dateInput = this.querySelector('.date-input');
+                    const selectedDate = dateInput.value;
+                    
+                    if (selectedDate < todayString) {
+                        e.preventDefault(); // Останавливаем отправку формы
+                        dateInput.classList.add('invalid');
+                        showAlert('❌ ЗАПРЕЩЕНО! Нельзя установить срок обработки на прошедшую дату!', 'error');
+                        
+                        // Возвращаем к исходному значению
+                        setTimeout(() => {
+                            dateInput.value = dateInput.getAttribute('value');
+                            dateInput.classList.remove('invalid');
+                        }, 2000);
+                        
+                        return false;
+                    }
+                });
+            });
+
+            function showAlert(message, type) {
+                // Удаляем существующие алерты
+                document.querySelectorAll('.alert').forEach(alert => alert.remove());
+                
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type}`;
+                alertDiv.textContent = message;
+                alertDiv.style.fontSize = '16px';
+                alertDiv.style.fontWeight = '900';
+                
+                const container = document.querySelector('.ticket-list');
+                const title = container.querySelector('.title_history');
+                title.insertAdjacentElement('afterend', alertDiv);
+                
+                // Автоматически скрываем алерт через 5 секунд
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 5000);
             }
         });
     </script>

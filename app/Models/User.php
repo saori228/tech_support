@@ -5,76 +5,116 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-// use Laravel\Sanctum\HasApiTokens; // Закомментировано, так как пакет не установлен
 
+/**
+ * Модель пользователя
+ * Основная модель для всех пользователей системы: обычных пользователей, сотрудников поддержки и администраторов
+ * Наследуется от Authenticatable для поддержки аутентификации Laravel
+ */
 class User extends Authenticatable
 {
     // use HasApiTokens, HasFactory, Notifiable; // Закомментировано, так как пакет не установлен
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
+     * Поля, которые можно массово заполнять
+     * Определяет, какие поля можно безопасно заполнять через create() или fill()
      *
      * @var array<int, string>
      */
     protected $fillable = [
-        'first_name',
-        'last_name',
-        'email',
-        'password',
-        'role_id',
+        'first_name',  // Имя пользователя
+        'last_name',   // Фамилия пользователя
+        'email',       // Email адрес (используется для входа)
+        'password',    // Пароль (будет автоматически хеширован)
+        'role_id',     // ID роли пользователя (связь с таблицей roles)
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * Поля, которые должны быть скрыты при сериализации
+     * Эти поля не будут показаны при преобразовании модели в JSON
      *
      * @var array<int, string>
      */
     protected $hidden = [
-        'password',
-        'remember_token',
+        'password',      // Пароль никогда не должен передаваться клиенту
+        'remember_token', // Токен "запомнить меня" - внутренняя информация
     ];
 
     /**
-     * The attributes that should be cast.
+     * Поля, которые должны быть приведены к определенным типам
+     * Автоматическое преобразование значений из базы данных
      *
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
+        'email_verified_at' => 'datetime', // Преобразует строку в объект Carbon (дата/время)
+        'password' => 'hashed',            // Автоматически хеширует пароль при сохранении
     ];
 
+    /**
+     * Связь с ролью пользователя
+     * Каждый пользователь принадлежит одной роли
+     */
     public function role()
     {
+        // belongsTo означает "принадлежит к"
+        // Этот пользователь принадлежит роли с ID = role_id
         return $this->belongsTo(Role::class);
     }
 
+    /**
+     * Связь с обращениями пользователя
+     * Один пользователь может создать много обращений
+     */
     public function tickets()
     {
+        // hasMany означает "имеет много"
+        // Этот пользователь может иметь много обращений
         return $this->hasMany(Ticket::class);
     }
 
+    /**
+     * Проверка, является ли пользователь администратором
+     * Метод для удобной проверки административных прав
+     */
     public function isAdmin()
     {
-        // Исправленный метод для проверки роли админа
-        // Проверяем как по имени "администратор", так и по имени "admin"
+        // ИСПРАВЛЕННЫЙ МЕТОД для проверки роли админа
+        // Проверяем наличие роли И соответствие названия
+        // Поддерживаем как русское "администратор", так и английское "admin"
         return $this->role && ($this->role->name === 'администратор' || $this->role->name === 'admin');
     }
 
+    /**
+     * Проверка, является ли пользователь сотрудником поддержки
+     * Метод для проверки прав сотрудника технической поддержки
+     */
     public function isSupport()
     {
+        // Проверяем наличие роли И соответствие названию "сотрудник"
         return $this->role && $this->role->name === 'сотрудник';
     }
 
+    /**
+     * Проверка, является ли пользователь обычным пользователем
+     * Метод для проверки роли обычного пользователя системы
+     */
     public function isUser()
     {
+        // Проверяем наличие роли И соответствие названию "пользователь"
         return $this->role && $this->role->name === 'пользователь';
     }
     
-    // Метод для получения всех сообщений пользователя
+    /**
+     * Связь с сообщениями пользователя
+     * Получает все сообщения, где пользователь участвует как отправитель или получатель
+     * ВНИМАНИЕ: Этот метод может работать некорректно из-за смешивания hasMany и orWhere
+     */
     public function messages()
     {
+        // ПРОБЛЕМНЫЙ КОД: смешивание отношений и запросов
+        // Лучше использовать отдельные методы или scope
         return $this->hasMany(Message::class, 'user_id')
             ->orWhere('support_id', $this->id);
     }
