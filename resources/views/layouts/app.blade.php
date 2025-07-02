@@ -587,13 +587,16 @@
     </div>
     
     <script>
-        // Проверка мобильного устройства и применение соответствующих стилей
+        // Проверка мобильного устройства и применение соответствующих стилей (DOM - объектаная модель документа, представленная html-документом)
         document.addEventListener('DOMContentLoaded', function() {
             const isMobile = window.innerWidth <= 480;
-            
+            //применяет мобильные стили, если включена мобилка
             if (isMobile) {
+                //скрывает текстовую ссылку профиля
                 document.querySelector('.profile-link').style.display = 'none';
+                // показываем иконфу
                 document.querySelector('.profile-icon').style.display = 'block';
+                // подсказка + ссылка на лк
                 document.querySelector('.home-hint').style.display = 'flex';
                 document.querySelector('.home-link').style.display = 'flex';
             }
@@ -601,7 +604,7 @@
             // Обработка изменения размера окна
             window.addEventListener('resize', function() {
                 const isMobileNow = window.innerWidth <= 480;
-                
+                //динамическое изменение окон
                 document.querySelector('.profile-link').style.display = isMobileNow ? 'none' : 'block';
                 document.querySelector('.profile-icon').style.display = isMobileNow ? 'block' : 'none';
                 document.querySelector('.home-hint').style.display = isMobileNow ? 'flex' : 'none';
