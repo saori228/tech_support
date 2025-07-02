@@ -38,20 +38,30 @@ class AdminController extends Controller
         if ($user->role && ($user->role->name === 'администратор' || $user->role->name === 'admin')) {
             
             // БЛОК ПОИСКА ПОЛЬЗОВАТЕЛЕЙ
-            // Если в запросе есть параметр 'search' и он не пустой
-            if ($request->has('search') && !empty($request->search)) {
+            // Если в запросе есть параметр 'search'
+            if ($request->has('search')) {
                 $searchTerm = $request->search;  // Получаем поисковый запрос
                 
-                // Ищем пользователей по разным полям
-                $users = User::where(function($query) use ($searchTerm) {
-                    $query->where('email', 'like', '%' . $searchTerm . '%')           // Поиск по email
-                          ->orWhere('first_name', 'like', '%' . $searchTerm . '%')     // Поиск по имени
-                          ->orWhere('last_name', 'like', '%' . $searchTerm . '%')      // Поиск по фамилии
-                          ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', '%' . $searchTerm . '%'); // Поиск по полному имени
-                })
-                ->with('role')                    // Загружаем связанную роль пользователя
-                ->where('id', '!=', Auth::id())   // Исключаем текущего администратора из результатов
-                ->get();                          // Выполняем запрос и получаем результаты
+                // Если поисковый запрос пустой
+                if (empty($searchTerm)) {
+                    // Показываем первых 10 пользователей
+                    $users = User::with('role')
+                                ->where('id', '!=', Auth::id())
+                                ->orderBy('first_name')
+                                ->limit(10)
+                                ->get();
+                } else {
+                    // Ищем пользователей по разным полям
+                    $users = User::where(function($query) use ($searchTerm) {
+                        $query->where('email', 'like', '%' . $searchTerm . '%')           // Поиск по email
+                              ->orWhere('first_name', 'like', '%' . $searchTerm . '%')     // Поиск по имени
+                              ->orWhere('last_name', 'like', '%' . $searchTerm . '%')      // Поиск по фамилии
+                              ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $searchTerm . '%']); // Поиск по полному имени
+                    })
+                    ->with('role')                    // Загружаем связанную роль пользователя
+                    ->where('id', '!=', Auth::id())   // Исключаем текущего администратора из результатов
+                    ->get();                          // Выполняем запрос и получаем результаты
+                }
                 
                 // Если это AJAX-запрос (асинхронный запрос из JavaScript)
                 if ($request->ajax()) {
