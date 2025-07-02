@@ -368,18 +368,21 @@
 </style>
 
 <script>
+    //загрузка скрипта DOM (DOM - объектаная модель документа, представленная html-документом)
     document.addEventListener('DOMContentLoaded', function() {
+        // элементы dom
         const searchInput = document.getElementById('userSearch');
         const searchResults = document.getElementById('searchResults');
         const usersList = document.getElementById('usersList');
         const usersTableBody = document.getElementById('usersTableBody');
+        // сохранение оригинального содержимое списков
         let originalUsersListHTML = usersList.innerHTML;
         let originalTableHTML = usersTableBody.innerHTML;
         
         // Получаем данные о ролях из PHP
         const roles = @json($roles);
         const updateRoleBaseUrl = "{{ url('admin/users') }}";
-        
+        //проверка поиска
         if (searchInput) {
             let searchTimeout;
             
@@ -389,16 +392,17 @@
                     performSearch('');
                 }
             });
-            
+            // обработчик ввода текста в поле поиск
             searchInput.addEventListener('input', function() {
+                //очищаем прошлый запрос, чтобы много запросов не было
                 clearTimeout(searchTimeout);
                 const query = this.value.trim();
-                
+                //новое время поиска
                 searchTimeout = setTimeout(() => {
                     performSearch(query);
                 }, 300);
             });
-            
+            //функция для выполнения поиска пользователей
             function performSearch(query) {
                 if (query === '') {
                     // Показываем первых 10 пользователей
@@ -416,6 +420,7 @@
                         console.error('Ошибка поиска:', error);
                     });
                 } else {
+                    //поиск с переданным запросом
                     fetch(`{{ route('admin.index') }}?search=${encodeURIComponent(query)}`, {
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
@@ -424,6 +429,7 @@
                     })
                     .then(response => response.json())
                     .then(data => {
+                        //обновление элементов с результатами поиска
                         showSearchResults(data);
                         updateUsersList(data);
                         updateUsersTable(data);
@@ -433,13 +439,14 @@
                     });
                 }
             }
-            
+            // функция для отображения поиска в выпадающем списке
             function showSearchResults(users) {
                 searchResults.innerHTML = '';
                 
                 if (users.length === 0) {
                     searchResults.innerHTML = '<div class="search-result-item">Пользователи не найдены</div>';
                 } else {
+                     //создание элеметов для каждого найденного пользователя
                     users.forEach(user => {
                         const item = document.createElement('div');
                         item.className = 'search-result-item';
@@ -448,10 +455,12 @@
                         userInfo.innerHTML = `<strong>${user.first_name} ${user.last_name}</strong><br><small>${user.email}</small>`;
                         
                         item.appendChild(userInfo);
-                        
+                        //обработка клика по результату поиска
                         item.addEventListener('click', function() {
+                            // заполняем поле поиска именем пользователя
                             searchInput.value = `${user.first_name} ${user.last_name}`;
                             searchResults.style.display = 'none';
+                            //обновление только для выбранного пользователя
                             updateUsersList([user]);
                             updateUsersTable([user]);
                         });
@@ -459,10 +468,10 @@
                         searchResults.appendChild(item);
                     });
                 }
-                
+                // блок результат
                 searchResults.style.display = 'block';
             }
-            
+            //функция для выбора ролей
             function createRoleOptions(selectedRoleId) {
                 return roles.map(role => 
                     `<option value="${role.id}" ${selectedRoleId == role.id ? 'selected' : ''}>${role.name}</option>`
