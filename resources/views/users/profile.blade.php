@@ -144,30 +144,33 @@
     </style>
     
     <script>
+        // получения элементов дом, функция переключения режима редактирования для профиля (DOM - объектаная модель документа, представленная html-документом)
         function toggleEdit(field) {
-            const input = document.getElementById(field + '_input');
-            const btn = document.getElementById(field + '_btn');
-            const submitBtn = document.getElementById('submit_btn');
+            const input = document.getElementById(field + '_input'); //поле ввода
+            const btn = document.getElementById(field + '_btn'); //кнопка изменить/отмена
+            const submitBtn = document.getElementById('submit_btn'); //кнопка отправки
             
             if (input.style.display === 'none') {
-                input.style.display = 'inline-block';
-                btn.textContent = 'Отмена';
-                submitBtn.style.display = 'block';
+                //редактирование
+                input.style.display = 'inline-block'; //поле ввода
+                btn.textContent = 'Отмена'; //меняем текст кнопки
+                submitBtn.style.display = 'block'; //кнопка отправки
             } else {
-                input.style.display = 'none';
-                btn.textContent = 'Изменить';
+                //если не захотим что-то менять
+                input.style.display = 'none'; // скрываем поля ввода
+                btn.textContent = 'Изменить'; //возвращает исходный текст кнопки
                 
                 // Проверяем, есть ли еще видимые поля ввода
                 const inputs = document.querySelectorAll('input[id$="_input"]');
                 let allHidden = true;
-                
+                //проверка каждого поле ввода на странице
                 for (const inp of inputs) {
                     if (inp.style.display !== 'none') {
                         allHidden = false;
-                        break;
-                    }
+                        break; // прерываем цикл, если нашли видимое поле
+                    } 
                 }
-                
+                // если поля скрыты, то скрываем кнопку отправить
                 if (allHidden) {
                     submitBtn.style.display = 'none';
                 }
