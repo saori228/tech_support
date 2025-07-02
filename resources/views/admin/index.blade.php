@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+
 <div class="admin-container">
     <h2 class="title">Админ-панель</h2>
     
@@ -412,7 +413,12 @@
                             'Accept': 'application/json'
                         }
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         showSearchResults(data.slice(0, 10));
                     })
@@ -427,7 +433,12 @@
                             'Accept': 'application/json'
                         }
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         //обновление элементов с результатами поиска
                         showSearchResults(data);
@@ -562,4 +573,5 @@
         }
     });
 </script>
+
 @endsection
