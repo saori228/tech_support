@@ -37,36 +37,28 @@ class ChatController extends Controller
             if ($request->has('search')) {
                 // Получаем роль обычного пользователя
                 $userRole = Role::where('name', 'пользователь')->first();
+                
+                if (!$userRole) {
+                    return response()->json([]);
+                }
+                
                 $searchTerm = $request->search;  // Поисковый запрос
                 
                 // Если поисковый запрос пустой
                 if (empty($searchTerm)) {
-                    // Показываем всех пользователей с приоритетом для тех, кто писал недавно
+                    // Показываем всех пользователей
                     $searchResults = User::where('role_id', $userRole->id)
-                        // Присоединяем таблицу сообщений для подсчета активности
-                        ->leftJoin('messages', function($join) use ($user) {
-                            $join->on('users.id', '=', 'messages.user_id')           // Связываем по ID пользователя
-                                 ->where('messages.is_from_user', true)              // Только сообщения ОТ пользователей
-                                 ->where('messages.support_id', $user->id)           // К текущему сотруднику
-                                 ->where('messages.created_at', '>', now()->subHours(24)); // За последние 24 часа
-                        })
-                        // Выбираем данные пользователя и считаем количество недавних сообщений
-                        ->select('users.*', DB::raw('COUNT(messages.id) as recent_messages_count'))
-                        // Группируем по всем полям пользователя 
-                        ->groupBy('users.id', 'users.first_name', 'users.last_name', 'users.email', 'users.role_id', 'users.created_at', 'users.updated_at')
-                        // Сортируем: сначала те, кто писал недавно, потом по имени
-                        ->orderByDesc('recent_messages_count')
-                        ->orderBy('users.first_name')
-                        ->limit(10)  // Ограничиваем результат 10 пользователями
+                        ->orderBy('first_name')
+                        ->limit(10)
                         ->get();
                 } else {
                     // Поиск по email и ФИО
                     $searchResults = User::where('role_id', $userRole->id)
                         ->where(function($query) use ($searchTerm) {
-                            $query->where('email', 'like', '%' . $searchTerm . '%')                    // Поиск по email
-                                  ->orWhere('first_name', 'like', '%' . $searchTerm . '%')             // Поиск по имени
-                                  ->orWhere('last_name', 'like', '%' . $searchTerm . '%')              // Поиск по фамилии
-                                  ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', '%' . $searchTerm . '%'); // Поиск по полному имени
+                            $query->where('email', 'like', '%' . $searchTerm . '%')
+                                  ->orWhere('first_name', 'like', '%' . $searchTerm . '%')
+                                  ->orWhere('last_name', 'like', '%' . $searchTerm . '%')
+                                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $searchTerm . '%']);
                         })
                         ->get();
                 }
@@ -151,6 +143,11 @@ class ChatController extends Controller
             // ПОИСК СОТРУДНИКОВ ДЛЯ АДМИНА
             if ($request->has('search')) {
                 $supportRole = Role::where('name', 'сотрудник')->first();
+                
+                if (!$supportRole) {
+                    return response()->json([]);
+                }
+                
                 $searchTerm = $request->search;
                 
                 if (empty($searchTerm)) {
@@ -166,7 +163,7 @@ class ChatController extends Controller
                             $query->where('email', 'like', '%' . $searchTerm . '%')
                                   ->orWhere('first_name', 'like', '%' . $searchTerm . '%')
                                   ->orWhere('last_name', 'like', '%' . $searchTerm . '%')
-                                  ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', '%' . $searchTerm . '%');
+                                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $searchTerm . '%']);
                         })
                         ->get();
                 }
