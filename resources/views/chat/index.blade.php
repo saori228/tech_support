@@ -180,20 +180,24 @@
 </style>
 
 <script>
+    // загрузка дом (DOM - объектаная модель документа, представленная html-документом)
     document.addEventListener('DOMContentLoaded', function() {
+        // поле поиска
         const searchInput = document.getElementById('userSearch') || document.getElementById('supportSearch');
+        // контейнер для результат поиска
         const searchResults = document.getElementById('searchResults');
-        
+        //проверка существования поиска
         if (searchInput) {
-            let searchTimeout;
+            let searchTimeout; // переменная для хранения таймера
             
             // Показываем результаты при фокусе на поле поиска
             searchInput.addEventListener('focus', function() {
+                //поиск без запроса
                 if (this.value.trim() === '') {
                     performSearch('');
                 }
             });
-            
+                //обработчик ввода текста
             searchInput.addEventListener('input', function() {
                 clearTimeout(searchTimeout);
                 const query = this.value.trim();
@@ -202,42 +206,45 @@
                     performSearch(query);
                 }, 300);
             });
-            
+            // функция выполнения поиска пользователей
             function performSearch(query) {
+                //ajax запрос на поиск
                 fetch(`{{ route('chat.index') }}?search=${encodeURIComponent(query)}`, {
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
+                        'X-Requested-With': 'XMLHttpRequest', // указываем, что это ajax
+                        'Accept': 'application/json' //ожидание json в ответе
                     }
                 })
-                .then(response => response.json())
+                .then(response => response.json()) //преобразуем ответ в json
                 .then(data => {
+                    // очищаем предыдущие результаты
                     searchResults.innerHTML = '';
-                    
+                    // если пользователи не найдены
                     if (data.length === 0) {
                         searchResults.innerHTML = '<div class="search-result-item">Пользователи не найдены</div>';
                     } else {
+                        // для каждого найденного пользователя создаем элемент
                         data.forEach(user => {
                             const item = document.createElement('div');
                             item.className = 'search-result-item';
-                            
+                            // блок с информацией о пользователе
                             const userInfo = document.createElement('div');
                             userInfo.innerHTML = `<strong>${user.first_name} ${user.last_name}</strong><br><small>${user.email}</small>`;
                             
                             item.appendChild(userInfo);
                             
-                            // Добавляем индикатор новых сообщений для сотрудников поддержки
+                            // Добавляем индикатор новых сообщений
                             @if(auth()->user()->isSupport())
                             if (user.has_new_messages) {
                                 const indicatorContainer = document.createElement('div');
                                 indicatorContainer.style.display = 'flex';
                                 indicatorContainer.style.alignItems = 'center';
                                 indicatorContainer.style.gap = '5px';
-                                
+                                //индикатор
                                 const indicator = document.createElement('div');
                                 indicator.className = 'new-message-indicator';
                                 indicator.title = 'Есть новые сообщения';
-                                
+                                //счётчик для непрочитанных сообщений
                                 if (user.unread_count > 0) {
                                     const countBadge = document.createElement('span');
                                     countBadge.className = 'unread-count';
@@ -249,19 +256,20 @@
                                 item.appendChild(indicatorContainer);
                             }
                             @endif
-                            
+                            //обработка клика
                             item.addEventListener('click', function() {
                                 @if(auth()->user()->isSupport())
+                                //для перехода в чат с пользователями
                                 window.location.href = `{{ route('chat.index') }}?user_id=${user.id}`;
                                 @elseif(auth()->user()->isAdmin())
                                 window.location.href = `{{ route('chat.index') }}?support_id=${user.id}`;
                                 @endif
                             });
-                            
+                            // добавляем элемент в контейнер результатов
                             searchResults.appendChild(item);
                         });
                     }
-                    
+                    //блок с результатами
                     searchResults.style.display = 'block';
                 })
                 .catch(error => {
