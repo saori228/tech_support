@@ -490,15 +490,22 @@
             }
             
             function updateUsersList(users) {
+                //если пользователей нет, то показывает сообщения
                 if (users.length === 0) {
                     usersList.innerHTML = '<div class="admin-user-item">Пользователи не найдены</div>';
                     return;
                 }
                 
-                usersList.innerHTML = '';
+                usersList.innerHTML = '';//очистка текущего списка
+                // для каждого пользователя создаём карточку
                 users.forEach(user => {
+                    //создание контейнера для карточки
                     const userItem = document.createElement('div');
-                    userItem.className = 'admin-user-item';
+                    userItem.className = 'admin-user-item'; //базовый класс для стилей
+                    // заполняем карточку содержимым
+                    // основнная инфа о пользователе
+                    // форма для изменения роли
+                    // выпадающий список ролей
                     userItem.innerHTML = `
                         <div class="user-info">
                             <div class="user-name">${user.first_name} ${user.last_name}</div>
@@ -518,6 +525,7 @@
                             </form>
                         </div>
                     `;
+                    // добавляем карточку в список
                     usersList.appendChild(userItem);
                 });
             }
@@ -527,10 +535,13 @@
                     usersTableBody.innerHTML = '<tr><td colspan="6">Пользователи не найдены</td></tr>';
                     return;
                 }
-                
+                //очищаем таблицу
                 usersTableBody.innerHTML = '';
+                // создаем строки для каждого пользователя
                 users.forEach(user => {
-                    const row = document.createElement('tr');
+                    const row = document.createElement('tr'); //создание строки в таблице
+                    //заполняем ячейки данными
+                    //основные данные пользователей
                     row.innerHTML = `
                         <td>${user.id}</td>
                         <td>${user.first_name}</td>
@@ -550,6 +561,7 @@
                             </form>
                         </td>
                     `;
+                    //добавляем строку в таблицу
                     usersTableBody.appendChild(row);
                 });
             }
