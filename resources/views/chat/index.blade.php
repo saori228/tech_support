@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+
 <div class="chat-container">
     <div class="chat-title">ЧАТ</div>
     
@@ -87,6 +88,63 @@
 </div>
 
 <style>
+    .search-container {
+        width: 100%;
+        max-width: 500px;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 10px 15px;
+        border: 2px solid #000;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: 900;
+        outline: none;
+    }
+    
+    .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 2px solid #000;
+        border-top: none;
+        border-radius: 0 0 15px 15px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+    }
+    
+    .search-result-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .search-result-item:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+    
+    .new-message-indicator {
+        width: 8px;
+        height: 8px;
+        background-color: #ff4444;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
     .chat-navigation {
         padding: 10px;
         display: flex;
@@ -176,6 +234,24 @@
             width: 18px;
             height: 18px;
         }
+        
+        .search-container {
+            margin-bottom: 15px;
+        }
+        
+        .search-input {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        
+        .search-results {
+            max-height: 180px;
+        }
+        
+        .search-result-item {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
     }
 </style>
 
@@ -193,9 +269,7 @@
             // Показываем результаты при фокусе на поле поиска
             searchInput.addEventListener('focus', function() {
                 //поиск без запроса
-                if (this.value.trim() === '') {
-                    performSearch('');
-                }
+                performSearch('');
             });
                 //обработчик ввода текста
             searchInput.addEventListener('input', function() {
@@ -204,7 +278,7 @@
                 
                 searchTimeout = setTimeout(() => {
                     performSearch(query);
-                }, 300);
+                }, 200);
             });
             // функция выполнения поиска пользователей
             function performSearch(query) {
@@ -215,7 +289,12 @@
                         'Accept': 'application/json' //ожидание json в ответе
                     }
                 })
-                .then(response => response.json()) //преобразуем ответ в json
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json(); //преобразуем ответ в json
+                })
                 .then(data => {
                     // очищаем предыдущие результаты
                     searchResults.innerHTML = '';
@@ -245,7 +324,7 @@
                                 indicator.className = 'new-message-indicator';
                                 indicator.title = 'Есть новые сообщения';
                                 //счётчик для непрочитанных сообщений
-                                if (user.unread_count > 0) {
+                                if (user.unread_count && user.unread_count > 0) {
                                     const countBadge = document.createElement('span');
                                     countBadge.className = 'unread-count';
                                     countBadge.textContent = user.unread_count;
@@ -274,6 +353,8 @@
                 })
                 .catch(error => {
                     console.error('Ошибка поиска:', error);
+                    searchResults.innerHTML = '<div class="search-result-item">Ошибка поиска. Попробуйте еще раз.</div>';
+                    searchResults.style.display = 'block';
                 });
             }
             
@@ -292,4 +373,5 @@
         }
     });
 </script>
+
 @endsection
