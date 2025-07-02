@@ -103,25 +103,31 @@
     </style>
     
     <script>
-        // Устанавливаем максимальную дату для выбора - текущая дата и время
+        // Устанавливаем максимальную дату для выбора - текущая дата и время (DOM - объектаная модель документа, представленная html-документом)
         document.addEventListener('DOMContentLoaded', function() {
+            //создание объекта (date) с текущей датой и временем
             const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            
+            // добавление компонентов даты и времени
+            // нули для однозначных чисел
+            const year = now.getFullYear(); //текущий год
+            const month = String(now.getMonth() + 1).padStart(2, '0'); //месяц // + 1 из-за того, что месяца считаются в javascript с 0, а у всех людей привычно с 1 (январь 0 + 1)
+            const day = String(now.getDate()).padStart(2, '0'); // день месяца
+            const hours = String(now.getHours()).padStart(2, '0'); //часы
+            const minutes = String(now.getMinutes()).padStart(2, '0');//минуты
+            //формирование строки
             const maxDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            // устанавливаем допустимое значение как максимальое допустимое
             document.getElementById('error_datetime').max = maxDateTime;
             
             // Дополнительная проверка при отправке формы
             document.querySelector('form').addEventListener('submit', function(e) {
+                // получаем выбранную пользователем дату
                 const selectedDate = new Date(document.getElementById('error_datetime').value);
+                // новый объект с текущей датой и временем для сравнения
                 const currentDate = new Date();
-                
+                // проверка даты, чтобы она не была выбрана в будущем
                 if (selectedDate > currentDate) {
-                    e.preventDefault();
+                    e.preventDefault(); // отменяем отправку формы
                     alert('Дата и время возникновения ошибки не могут быть в будущем!');
                 }
             });
