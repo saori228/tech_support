@@ -273,30 +273,35 @@
     </style>
     
     <script>
+        // основная функция после загрузки дом (DOM - объектаная модель документа, представленная html-документом)
         document.addEventListener('DOMContentLoaded', function() {
-            // Получаем сегодняшнюю дату
+            //подготовка даты
+            // Получаем сегодняшнюю дату (для валидации)
             const today = new Date();
+            //форматируем строку yyyy-mm-dd
+            //0 нужны так как числа могут начинаться с нуля
             const todayString = today.getFullYear() + '-' + 
-                String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(today.getMonth() + 1).padStart(2, '0') + '-' + // +1 нужен, так как в JS месяц считается с нуля
                 String(today.getDate()).padStart(2, '0');
 
-            // Поиск пользователей (ваш существующий код)
+            // Поиск пользователей 
             const searchInput = document.getElementById('userSearch');
             const searchResults = document.getElementById('searchResults');
             
             if (searchInput) {
                 let searchTimeout;
-                
+                // обработчик ввода в поисковое поле
                 searchInput.addEventListener('input', function() {
                     clearTimeout(searchTimeout);
                     const query = this.value.trim();
-                    
+                    //не ищем если меньше 2 символов
                     if (query.length < 2) {
                         searchResults.style.display = 'none';
                         return;
                     }
-                    
+                    //задержка перед поиском
                     searchTimeout = setTimeout(() => {
+                        //ajax для поиска
                         fetch(`{{ route('tickets.index') }}?search=${encodeURIComponent(query)}`, {
                             headers: {
                                 'X-Requested-With': 'XMLHttpRequest',
@@ -305,18 +310,19 @@
                         })
                         .then(response => response.json())
                         .then(data => {
-                            searchResults.innerHTML = '';
+                            searchResults.innerHTML = ''; //очищаем предыдущие запросы
                             
                             if (data.length === 0) {
                                 searchResults.innerHTML = '<div class="search-result-item">Пользователи не найдены</div>';
                             } else {
+                                // создаем элеметы для каждого пользователя
                                 data.forEach(user => {
                                     const item = document.createElement('div');
                                     item.className = 'search-result-item';
                                     
                                     const userInfo = document.createElement('div');
                                     userInfo.innerHTML = `<strong>${user.first_name} ${user.last_name}</strong><br><small>${user.email}</small>`;
-                                    
+                                    // переход к обращениям пользователя при клике
                                     item.appendChild(userInfo);
                                     
                                     item.addEventListener('click', function() {
@@ -348,9 +354,9 @@
                 // Валидация при изменении даты
                 input.addEventListener('change', function() {
                     const selectedDate = this.value;
-                    
+                    // проверка на прошедшую дату
                     if (selectedDate < todayString) {
-                        this.classList.add('invalid');
+                        this.classList.add('invalid'); // визуальная ошибка
                         showAlert('❌ Срок обработки не может быть установлен на прошедшую дату!', 'error');
                         
                         // Возвращаем к исходному значению через 2 секунды
@@ -369,7 +375,7 @@
                 form.addEventListener('submit', function(e) {
                     const dateInput = this.querySelector('.date-input');
                     const selectedDate = dateInput.value;
-                    
+                    //дополнительная проверка перед отправкой
                     if (selectedDate < todayString) {
                         e.preventDefault(); // Останавливаем отправку формы
                         dateInput.classList.add('invalid');
@@ -385,17 +391,17 @@
                     }
                 });
             });
-
+            // показ уведомлений
             function showAlert(message, type) {
                 // Удаляем существующие алерты
                 document.querySelectorAll('.alert').forEach(alert => alert.remove());
-                
+                //создание нового уведомления
                 const alertDiv = document.createElement('div');
                 alertDiv.className = `alert alert-${type}`;
                 alertDiv.textContent = message;
                 alertDiv.style.fontSize = '16px';
                 alertDiv.style.fontWeight = '900';
-                
+                // вставляем дом после заголовка
                 const container = document.querySelector('.ticket-list');
                 const title = container.querySelector('.title_history');
                 title.insertAdjacentElement('afterend', alertDiv);
